@@ -34,6 +34,13 @@ WITH game_sets AS (
     FROM game_sets
     GROUP BY id
     HAVING bool_and(red <= 12 AND green <= 13 AND blue <= 14) = true
+), minimum_sets AS (
+    SELECT
+        id,
+        max(red) * max(green) * max(blue) as power
+    FROM game_sets
+    GROUP BY id
 )
-SELECT sum(id) as solution
-FROM possible_games;
+SELECT
+    (SELECT SUM(id) FROM possible_games) as solution_part_1,
+    (SELECT SUM(power) FROM minimum_sets) as solution_part_2;
