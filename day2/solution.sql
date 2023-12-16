@@ -11,15 +11,9 @@ CREATE TABLE day2.inputs (
 WITH game_sets AS (
     SELECT
         id,
-        (CASE WHEN position('red' in game_set) > 0 THEN 
-            substring(game_set from '(\d+) red')::int 
-            ELSE 0 END) as red,
-        (CASE WHEN position('green' in game_set) > 0 THEN
-            substring(game_set from '(\d+) green')::int 
-            ELSE 0 END) as green,
-        (CASE WHEN position('blue' in game_set) > 0 THEN
-            substring(game_set from '(\d+) blue')::int 
-            ELSE 0 END) as blue
+        COALESCE((substring(game_set from '(\d+) red'))::int, 0) as red,
+        COALESCE((substring(game_set from '(\d+) green'))::int, 0) as green,
+        COALESCE((substring(game_set from '(\d+) blue'))::int, 0) as blue
     FROM (
         SELECT id, unnest(
             string_to_array(
