@@ -52,11 +52,41 @@ WITH extracted_characters AS (
         FROM day3.inputs
     ) i ON gn.row_id = i.id
     GROUP BY gn.row_id, gn.group_id, i.previous_value, i.current_value, i.next_value
+), solution_part_1 AS (
+    SELECT
+        SUM(number::int) AS solution_part_1
+    FROM extracted_numbers
+    WHERE 
+        SUBSTRING(previous_value FROM position - 1 FOR LENGTH(number) + 2) ~ '[^0-9.]' OR
+        SUBSTRING(current_value FROM position - 1 FOR LENGTH(number) + 2) ~ '[^0-9.]' OR
+        SUBSTRING(next_value FROM position - 1 FOR LENGTH(number) + 2) ~ '[^0-9.]'
+), gear_parts AS (
+    SELECT
+        ec.*,
+        array_agg(en.number) AS adjacent_numbers
+    FROM 
+        extracted_characters ec
+    LEFT JOIN 
+        extracted_numbers en
+    ON 
+        (ec.row_id BETWEEN en.row_id - 1 AND en.row_id + 1)
+        AND 
+        (ec.col_num BETWEEN en.position - 1 AND en.position + LENGTH(en.number))
+    WHERE 
+        ec.char = '*'
+    GROUP BY 
+        ec.row_id, ec.col_num, ec.char
+    HAVING 
+        COUNT(en.number) = 2
+), solution_part_2 AS (
+    SELECT
+        SUM(adjacent_numbers[1]::int * adjacent_numbers[2]::int) AS solution_part_2
+    FROM
+        gear_parts
 )
 SELECT
-    SUM(number::int) as solution_part_1
-FROM extracted_numbers
-WHERE 
-    SUBSTRING(previous_value FROM position - 1 FOR LENGTH(number) + 2) ~ '[^0-9.]' OR
-    SUBSTRING(current_value FROM position - 1 FOR LENGTH(number) + 2) ~ '[^0-9.]' OR
-    SUBSTRING(next_value FROM position - 1 FOR LENGTH(number) + 2) ~ '[^0-9.]';
+    solution_part_1,
+    solution_part_2
+FROM
+    solution_part_1,
+    solution_part_2;
