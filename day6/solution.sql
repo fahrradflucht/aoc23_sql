@@ -43,8 +43,6 @@ WITH times AS (
 ), strategies AS (
     SELECT
         races.id as race_id,
-        button_hold_time,
-        button_hold_time * (races.time - button_hold_time) AS distance,
         (button_hold_time * (races.time - button_hold_time)) > races.distance AS winning_strategy
     FROM
         races,
@@ -57,9 +55,34 @@ WITH times AS (
         strategies
     GROUP BY
         race_id
+), big_race AS (
+    SELECT
+        (
+            SELECT
+                regexp_replace(value, '[^0-9]', '', 'g')::bigint
+            FROM
+                day6.inputs
+            WHERE
+                value ~ '^Time: '
+        ) AS time,
+        (
+            SELECT
+                regexp_replace(value, '[^0-9]', '', 'g')::bigint
+            FROM
+                day6.inputs
+            WHERE
+                value ~ '^Distance: '
+        ) AS distance
+), big_race_strategies AS (
+    SELECT
+        (
+            button_hold_time * (big_race.time - button_hold_time)
+        ) > big_race.distance AS winning_strategy
+    FROM
+        big_race,
+        generate_series(0, big_race.time) AS button_hold_time
 )
 SELECT
-    day6.mul(margin) AS margin_product
-FROM
-    race_margins
+    (SELECT day6.mul(margin) FROM race_margins) AS solution_part_1,
+    (SELECT COUNT(*) FROM big_race_strategies WHERE winning_strategy) AS solution_part_2
 ;
